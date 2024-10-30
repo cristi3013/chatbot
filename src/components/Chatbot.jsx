@@ -7,21 +7,24 @@ import stockData from "../data/stockData";
 import { debounce } from "lodash";
 
 const Chatbot = () => {
+  // State for messages, loading indicator, and active message tracking
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(false);
   const [activeMessageId, setActiveMessageId] = useState(null);
   const messagesEndRef = useRef(null);
 
+  // Automatically scrolls chat to the latest message
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
+  // Scrolls to bottom whenever new messages are added
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
 
+  // Initial setup: welcome message and stock data validation
   useEffect(() => {
-    // Initialize with a welcome message
     const initialMessage = {
       type: "bot",
       text: "Welcome to the LSEG Stock Information Assistant! 📈",
@@ -41,6 +44,7 @@ const Chatbot = () => {
     }
   }, []);
 
+  // Adds a new message to the chat
   const addMessage = (message) => {
     const newMessage = { ...message, id: Date.now() };
     setMessages((prev) => [...prev, newMessage]);
@@ -48,6 +52,7 @@ const Chatbot = () => {
     return newMessage.id;
   };
 
+  // Simulates typing delay to create a realistic bot response effect
   const simulateTyping = async (callback) => {
     if (loading) return;
     setLoading(true);
@@ -60,6 +65,7 @@ const Chatbot = () => {
     }
   };
 
+  // Handles errors and shows a relevant message
   const handleError = (errorMessage) => {
     const newMessage = {
       type: "bot",
@@ -69,18 +75,18 @@ const Chatbot = () => {
     addMessage(newMessage);
   };
 
-  // Debounced functions with cancellation
+  // Debounced function to show stock exchange options with some delay to prevent rapid changes
   const debouncedShowExchangeOptions = debounce(async () => {
     if (loading) return;
 
-    // Cancel other pending actions
+    // Cancels any other pending actions for this function
     debouncedSelectExchange.cancel();
     debouncedShowStockPrice.cancel();
 
     await simulateTyping(() => {
       setActiveMessageId(null);
 
-      const newMessage = addMessage({
+      addMessage({
         type: "bot",
         text: "Please select a stock exchange:",
         options: stockData.map((exchange) => ({
@@ -91,10 +97,11 @@ const Chatbot = () => {
     });
   }, 300);
 
+  // Handles exchange selection and displays relevant stocks
   const debouncedSelectExchange = debounce(async (code) => {
     if (loading) return;
 
-    // Cancel other pending actions
+    // Cancels other pending actions
     debouncedShowExchangeOptions.cancel();
     debouncedShowStockPrice.cancel();
 
@@ -132,10 +139,11 @@ const Chatbot = () => {
     }
   }, 300);
 
+  // Shows stock price for the selected stock with error handling if data is unavailable
   const debouncedShowStockPrice = debounce(async (exchangeCode, stock) => {
     if (loading) return;
 
-    // Cancel other pending actions
+    // Cancels other pending actions
     debouncedShowExchangeOptions.cancel();
     debouncedSelectExchange.cancel();
 
